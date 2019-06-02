@@ -9,12 +9,15 @@
 <div class="_fwfl magic-show">
     @if ( ! auth()->check())
         @if($page)
-            <div class="page-header-wrap">
-                <header class="page-header" style="background-image: url({{ $page->getBannerImage() }})">
-                    <div class="constraint">
-                        <h1>{{ $page->title }}</h1>
+            <div class="_fwfl home-hero enrique">
+                <div class="enrique-inside">
+                    <div class="enrique-copy">
+                        <h1 class="enrique-heading">{{ $page->title }}</h1>
+                        <p class="enrique-text">{{ $page->page_slogan }}</p>
+                        <a class="btn _btn _btn-gray" href="{{ route('front_register') }}">{{ _t('register') }}</a>
                     </div>
-                </header>
+                    <img class="enrique-img" src="{{ asset("uploads/pages/{$page->banner}") }}" />
+                 </div>
             </div>
         @endif
     @endif

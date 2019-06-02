@@ -90,19 +90,9 @@ return [
     ),
     'themeFileExtensionsAllow' => ['html', 'js', 'css', 'png', 'jpg', 'gif', 'jpeg', 'otf', 'eot', 'svg', 'ttf', 'woff', 'woff2', 'json', 'txt'],
     'themeFilesRequired'       => ['index.html', 'screenshot.png', 'thumbnail.png'],
-    'facebook_api' => [
-        'app_id'                => '221184025235764',
-        'app_secret'            => 'd60cfc566041554b9d320e5df640b02a',
-        'default_graph_version' => 'v2.2',
-    ],
-    'google_api' => [
-        'client_id'     => '916322774631-d01n4dg7trevpggg1r7ch5kgt93bgt7p.apps.googleusercontent.com',
-        'client_secret' => 'p5Jw7_cEjBkGIRK68MiBIIia',
-        'app_name'      => 'NEXT',
-    ],
-    'register_from' => [
-        'facebook' => 'FACEBOOK',
-        'google'   => 'GOOGLE',
+    'socialiteProvider' => [
+        'facebook' => 'facebook',
+        'google'   => 'google',
     ],
     'wkhtmltopdf' => [ //Only compatible with version 0.12.4
         'no-outline',

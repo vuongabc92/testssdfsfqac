@@ -1,4 +1,5 @@
 <?php
+
 Route::group(['middleware' => ['web', 'master'], 'prefix' => 'kamehameha'], function ($route) {
     $route->get('/', 'DashboardController@index')->name('back_dashboard');
 

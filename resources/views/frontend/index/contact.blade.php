@@ -1,24 +1,29 @@
 @extends('frontend.layouts._layout')
 
+@section('title')
+    - Contact us
+@stop
+
 @section('link_style')
     <link rel="stylesheet" href="{{ asset('assets/frontend/css/page.css') }}">
 @stop
 
 @section('body')
 <div class="_fwfl">
-    <header class="page-header" style="background-image: url({{ asset(($page) ? $page->getBannerImage() : '') }})">
-        <div class="constraint">
-            <h1>{{ ($page) ? $page->title : 'Contact' }}</h1>
+    <div class="_fwfl page-hero contact-page enrique">
+        <div class="enrique-inside">
+            <div class="enrique-copy">
+                <h1>{{ $page->title }}</h1>
+                <p>{{ $page->page_slogan }}</p>
+            </div>
+            <img class="enrique-img" src="{{ asset("uploads/pages/{$page->banner}") }}" />
         </div>
-    </header>
+    </div>
     
     <div class="page-container">
         <div class="_fwfl page-inside">
-
             <div class="_fwfl page-content">
-                <div class="page-left">
-                    {!! ($page) ? $page->content : '' !!}
-                </div>
+                {!! $page->content !!}
             </div>
         </div>
     </div>

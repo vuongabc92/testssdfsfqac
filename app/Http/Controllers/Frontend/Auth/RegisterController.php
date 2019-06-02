@@ -9,17 +9,12 @@ use App\Http\Controllers\Frontend\Controller;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Http\Request;
 use Illuminate\Auth\Events\Registered;
-use App\Helpers\OutWorldAuth;
 use App\Models\Role;
 use Mail;
 
 class RegisterController extends Controller
 {
     use RegistersUsers;
-
-    use OutWorldAuth {
-        OutWorldAuth::__construct as private __owaConstruct;
-    }
     
     /**
      * Where to redirect users after login / registration.
@@ -35,7 +30,6 @@ class RegisterController extends Controller
      */
     public function __construct() {
         $this->middleware('guest');
-        $this->__owaConstruct();
     }
 
     /**
@@ -44,12 +38,7 @@ class RegisterController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function showRegistrationForm() {
-       if ( ! session_id()) session_start();
-        
-        return view('frontend.auth.register', [
-            'fbLoginUrl'     => $this->facebookAuthUrl(),
-            'googleLoginUrl' => $this->googleAuthUrl(),
-        ]);
+       return view('frontend.auth.register');
     }
     
     /**

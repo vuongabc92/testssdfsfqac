@@ -46,24 +46,35 @@ class PageController extends Controller {
 
     public function save(Request $request) {
         if ($request->isMethod('post')) {
-            $this->validate($request, $this->_getValidationRules(), $this->_getValidationMsg());
-
-            $storagePath = config('backend.page.upload');
-            $upload      = $this->uploadBannerImg([
-                'file'         => $request->file('banner'),
-                'storage_path' => $storagePath
-            ]);
-
-            if ( ! $upload) {
-                return back()->with('error', 'Could not upload image!!!');
-            }
-
             try {
-                $page          = new Page;
-                $page->banner  = $upload;
-                $page->title   = $request->get('title');
-                $page->slug    = $request->get('slug');
-                $page->content = $request->get('content');
+                $rules = $this->_getValidationRules();
+                $msg   = $this->_getValidationMsg();
+                if ($id = $request->get('id')) {
+                    $rules['slug'] = 'required|min:2|max:250|alpha_dash|unique:pages,slug,' . $id;
+                    $page = Page::find($request->get('id'));
+                } else {
+                    $page = new Page;
+                }
+
+                $this->validate($request, $rules, $msg);
+                if ($request->file('banner')) {
+                    $storagePath = config('backend.page.upload');
+                    $upload      = $this->uploadBannerImg([
+                        'file'         => $request->file('banner'),
+                        'storage_path' => $storagePath
+                    ]);
+
+                    if ( ! $upload) {
+                        return back()->with('error', 'Could not upload image!!!');
+                    }
+
+                    $page->banner = $upload;
+                }
+
+                $page->page_slogan = $request->get('page_slogan');
+                $page->slug        = $request->get('slug');
+                $page->title       = $request->get('title');
+                $page->content     = $request->get('content');
                 $page->save();
 
             } catch (\Exception $e) {
@@ -99,215 +110,6 @@ class PageController extends Controller {
             'home' => ($page) ? $page : $default,
             'slug' => $configSlug
         ]);
-    }
-    
-    public function saveHome(Request $request) {
-        if ($request->isMethod('post')) {
-            $configSlug  = config('backend.page.slug.home');
-            $page        = Page::where('slug', $configSlug)->first();
-            $storagePath = config('backend.page.upload');
-            
-            if (null === $page) {
-                $page = new Page;
-            }
-            
-            if ($request->file('banner')) {
-                $upload = $this->uploadBannerImg([
-                    'old_file'     => $page->banner,
-                    'file'         => $request->file('banner'),
-                    'storage_path' => $storagePath
-                ]);
-
-                if ( ! $upload) {
-                    return back()->with('error', 'Could not upload image!!!');
-                }
-
-                $page->banner  = $upload;
-            }
-            
-            $page->name    = $request->get('name');
-            $page->slug    = $configSlug;
-            $page->content = $request->get('content');
-            $page->save();
-            
-            return back()->with('success', 'Saved!');
-        }
-    }
-    
-    public function contact() {
-        $configSlug = config('backend.page.slug.contact');
-        $page       = Page::where('slug', $configSlug)->first();
-        $default    = $this->defaultPageClass();
-        
-        return view('backend.pages.contact', [
-            'contact' => ($page) ? $page : $default,
-            'slug'    => $configSlug
-        ]);
-    }
-    
-    public function saveContact(Request $request) {
-        if ($request->isMethod('post')) {
-            $configSlug  = config('backend.page.slug.contact');
-            $page        = Page::where('slug', $configSlug)->first();
-            $storagePath = config('backend.page.upload');
-            
-            if (null === $page) {
-                $page = new Page;
-            }
-            
-            if ($request->file('banner')) {
-                $upload = $this->uploadBannerImg([
-                    'old_file'     => $page->banner,
-                    'file'         => $request->file('banner'),
-                    'storage_path' => $storagePath
-                ]);
-
-                if ( ! $upload) {
-                    return back()->with('error', 'Could not upload image!!!');
-                }
-
-                $page->banner  = $upload;
-            }
-            
-            $page->name    = $request->get('name');
-            $page->slug    = $configSlug;
-            $page->content = $request->get('content');
-            $page->save();
-            
-            return back()->with('success', 'Saved!');
-        }
-    }
-    
-    public function developer() {
-        $configSlug = config('backend.page.slug.developer');
-        $page       = Page::where('slug', $configSlug)->first();
-        $default    =  $this->defaultPageClass();
-        
-        return view('backend.pages.developer', [
-            'developer' => ($page) ? $page : $default,
-            'slug'      => $configSlug
-        ]);
-    }
-    
-    public function saveDeveloper(Request $request) {
-        if ($request->isMethod('post')) {
-            $configSlug  = config('backend.page.slug.developer');
-            $page        = Page::where('slug', $configSlug)->first();
-            $storagePath = config('backend.page.upload');
-            
-            if (null === $page) {
-                $page = new Page;
-            }
-            
-            if ($request->file('banner')) {
-                $upload = $this->uploadBannerImg([
-                    'old_file'     => $page->banner,
-                    'file'         => $request->file('banner'),
-                    'storage_path' => $storagePath
-                ]);
-
-                if ( ! $upload) {
-                    return back()->with('error', 'Could not upload image!!!');
-                }
-
-                $page->banner  = $upload;
-            }
-            
-            $page->name    = $request->get('name');
-            $page->slug    = $configSlug;
-            $page->content = $request->get('content');
-            $page->save();
-            
-            return back()->with('success', 'Saved!');
-        }
-    }
-    
-    public function privacy() {
-        $configSlug = config('backend.page.slug.privacy');
-        $page       = Page::where('slug', $configSlug)->first();
-        $default    =  $this->defaultPageClass();
-        
-        return view('backend.pages.privacy', [
-            'privacy' => ($page) ? $page : $default,
-            'slug'    => $configSlug
-        ]);
-    }
-    
-    public function savePrivacy(Request $request) {
-        if ($request->isMethod('post')) {
-            $configSlug  = config('backend.page.slug.privacy');
-            $page        = Page::where('slug', $configSlug)->first();
-            $storagePath = config('backend.page.upload');
-            
-            if (null === $page) {
-                $page = new Page;
-            }
-            
-            if ($request->file('banner')) {
-                $upload = $this->uploadBannerImg([
-                    'old_file'     => $page->banner,
-                    'file'         => $request->file('banner'),
-                    'storage_path' => $storagePath
-                ]);
-
-                if ( ! $upload) {
-                    return back()->with('error', 'Could not upload image!!!');
-                }
-
-                $page->banner  = $upload;
-            }
-            
-            $page->name    = $request->get('name');
-            $page->slug    = $configSlug;
-            $page->content = $request->get('content');
-            $page->save();
-            
-            return back()->with('success', 'Saved!');
-        }
-    }
-    
-    public function terms() {
-        $configSlug = config('backend.page.slug.terms');
-        $page       = Page::where('slug', $configSlug)->first();
-        $default    =  $this->defaultPageClass();
-        
-        return view('backend.pages.terms', [
-            'terms' => ($page) ? $page : $default,
-            'slug'  => $configSlug
-        ]);
-    }
-    
-    public function saveTerms(Request $request) {
-        if ($request->isMethod('post')) {
-            $configSlug  = config('backend.page.slug.terms');
-            $page        = Page::where('slug', $configSlug)->first();
-            $storagePath = config('backend.page.upload');
-            
-            if (null === $page) {
-                $page = new Page;
-            }
-            
-            if ($request->file('banner')) {
-                $upload = $this->uploadBannerImg([
-                    'old_file'     => $page->banner,
-                    'file'         => $request->file('banner'),
-                    'storage_path' => $storagePath
-                ]);
-
-                if ( ! $upload) {
-                    return back()->with('error', 'Could not upload image!!!');
-                }
-
-                $page->banner  = $upload;
-            }
-            
-            $page->name    = $request->get('name');
-            $page->slug    = $configSlug;
-            $page->content = $request->get('content');
-            $page->save();
-            
-            return back()->with('success', 'Saved!');
-        }
     }
     
     protected function defaultPageClass() {
@@ -348,16 +150,14 @@ class PageController extends Controller {
 
     private function _getValidationRules() {
         return [
-            'banner'  => 'required|image',
+            'banner'  => 'image',
             'title'   => 'required|min:2|max:250',
-            'slug'    => 'required|min:2|max:250|unique:pages,slug|alpha_dash',
-            'content' => 'required|min:2'
+            'slug'    => 'required|min:2|max:250|unique:pages,slug|alpha_dash'
         ];
     }
 
     private function _getValidationMsg() {
         return [
-            'banner.required'  => "Banner is required.",
             'banner.image'     => "Banner must be an image.",
             'title.required'   => "Title is required.",
             'title.min'        => "Title is too short.",
@@ -371,4 +171,5 @@ class PageController extends Controller {
             'content.min'      => "Content is too short.",
         ];
     }
+
 }

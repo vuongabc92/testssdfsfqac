@@ -10,7 +10,7 @@ return [
         'slug' => [
             'home'      => 'home',
             'contact'   => 'contact',
-            'developer' => 'developer',
+            'hireus'    => 'hire-us',
             'privacy'   => 'privacy',
             'terms'     => 'terms'
         ],

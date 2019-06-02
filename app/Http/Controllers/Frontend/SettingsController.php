@@ -5,6 +5,7 @@
 
 namespace App\Http\Controllers\Frontend;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Intervention\Image\Facades\Image as ImageIntervention;
 use App\Models\UserProfile;
@@ -222,6 +223,10 @@ class SettingsController extends Controller {
                     
                 case '_SLUG':
                     $save = $this->saveSlug($request);
+                    break;
+
+                case '_USERNAME':
+                    $save = $this->saveUsername($request);
                     break;
                 
                 case '_PASS':
@@ -749,7 +754,14 @@ class SettingsController extends Controller {
                     'expertise' => ($save->expertise) ? $save->expertise->name : _t('setting.profile.pickexpertise'),
                     'cv_url'    => route('front_cv', ['slug' => $save->slug])
             ]];
-        } elseif($save instanceof Theme) {
+        }
+        elseif($save instanceof User) {
+            return [
+                'message' => _t('good_job'),
+                'data'    => [
+                    'username' => $save->username
+                ]];
+        }elseif($save instanceof Theme) {
             return [
                 'message' => _t('good_job'), 
                 'data'    => [

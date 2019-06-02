@@ -2,6 +2,13 @@
 
 namespace App\Models;
 
+/**
+ * @property mixed user_id
+ * @property string slug
+ * @property string avatar_image
+ * @property string first_name
+ * @property string last_name
+ */
 class UserProfile extends Base {
     
     /**

@@ -21,7 +21,6 @@ class IndexController extends Controller {
         $page       = Page::where('slug', $configSlug)->first();
         $themes     = Theme::where('activated', 1)->paginate($perPage);
         $themeCount = Theme::where('activated', 1)->skip(0)->take($perPage + 1)->count();
-         
         return view('frontend.index.index', [
             'themes'   => $themes,
             'page'     => $page,
@@ -32,25 +31,37 @@ class IndexController extends Controller {
     public function contact() {
         $configSlug = config('backend.page.slug.contact');
         $contact    = Page::where('slug', $configSlug)->first();
-        
+
+        if( ! $contact) {
+            abort(404);
+        }
+
         return view('frontend.index.contact', [
             'page' => $contact
         ]);
     }
     
-    public function developer() {
-        $configSlug = config('backend.page.slug.developer');
-        $developer  = Page::where('slug', $configSlug)->first();
-        
-        return view('frontend.index.developer', [
-            'page' => $developer
+    public function hireus() {
+        $configSlug = config('backend.page.slug.hireus');
+        $hireus     = Page::where('slug', $configSlug)->first();
+
+        if( ! $hireus) {
+            abort(404);
+        }
+
+        return view('frontend.index.hire-us', [
+            'page' => $hireus
         ]);
     }
     
     public function privacyPolicy() {
         $configSlug = config('backend.page.slug.privacy');
         $page       = Page::where('slug', $configSlug)->first();
-        
+
+        if( ! $page) {
+            abort(404);
+        }
+
         return view('frontend.index.privacy', [
             'page' => $page
         ]);
@@ -59,13 +70,13 @@ class IndexController extends Controller {
     public function termsAndConditions() {
         $configSlug = config('backend.page.slug.terms');
         $page       = Page::where('slug', $configSlug)->first();
-        
+
+        if( ! $page) {
+            abort(404);
+        }
+
         return view('frontend.index.terms', [
             'page' => $page
         ]);
-    }
-
-    public function resetPassMailTemplate() {
-        return view('frontend.index.mail-template');
     }
 }

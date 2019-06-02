@@ -3,6 +3,7 @@ info.octocv@gmail.com
 */
 .header {
     height: 60px;
+    padding: 0 15px;
     background-color: #fff;
     border-bottom: solid 2px #70be44;
 }
@@ -152,21 +153,12 @@ info.octocv@gmail.com
     color: #666;
     text-decoration: underline;
 }
-@media screen and (max-width: 1024px) {
-    .header-inside {
-        padding-left: 15px;
-        padding-right: 15px;
-    }
-}
+
 @media screen and (max-width: 480px) {
-    .header-inside {
-        padding-left: 10px;
-        padding-right: 10px;
+    .header-nav .header-register-btn {
+        display: none;
     }
-}
-@media screen and (min-width: 600px) {
-    .navlist li.headnav-contact,
-    .navlist li.headnav-dev {
-        display: inline;
+    .header-nav .navlist {
+        display: none;
     }
 }

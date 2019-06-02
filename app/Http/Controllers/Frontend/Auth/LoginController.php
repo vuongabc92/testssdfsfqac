@@ -8,18 +8,15 @@ use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use App\Models\User;
 use App\Models\Role;
 use App\Models\UserProfile;
-use App\Helpers\OutWorldAuth;
 use Google_Service_Oauth2_Userinfoplus;
+use Intervention\Image\Facades\Image as ImageIntervention;
+use Laravel\Socialite\Facades\Socialite;
 use Log;
 
 class LoginController extends Controller {
 
     use AuthenticatesUsers;
 
-    use OutWorldAuth {
-        OutWorldAuth::__construct as private __owaConstruct;
-    }
-    
     /**
      * Where to redirect users after login.
      *
@@ -34,202 +31,66 @@ class LoginController extends Controller {
      */
     public function __construct() {
         $this->middleware('guest', ['except' => 'logout']);
-        $this->__owaConstruct();
     }
-    
+
     /**
      * Show the application's login form.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
     public function showLoginForm() {
-        if ( ! session_id()) session_start();
-        
-        return view('frontend.auth.login', [
-            'fbLoginUrl'     => $this->facebookAuthUrl(),
-            'googleLoginUrl' => $this->googleAuthUrl(),
+        return view('frontend.auth.login');
+    }
+
+    public function redirectToFacebookProvider() {
+        return Socialite::driver('facebook')->redirect();
+    }
+
+    public function handleFacebookProviderCallback(Request $request){
+
+        if ($request->get('error')) {
+            return redirect(route('front_login'))->withErrors([
+                $this->username() => _t('auth.whoop'),
+            ]);
+        }
+
+        $facebookUser = Socialite::driver('facebook')->fields(['name', 'email', 'first_name', 'last_name'])->user();
+        $user         = $facebookUser->user;
+
+        $this->socialiteLogin([
+            'email'      => $facebookUser->getEmail(),
+            'first_name' => isset($user['first_name']) ? $user['first_name'] : '',
+            'last_name'  => isset($user['last_name'])  ? $user['last_name']  : '',
+            //'avatar'     => $facebookUser->avatar_original,
+            'provider'   => config('frontend.socialiteProvider.facebook')
         ]);
+
+        return redirect(route('front_settings'));
     }
 
-    /**
-     * Facebook login callback
-     *
-     * @return $this|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
-     * @throws \Facebook\Exceptions\FacebookSDKException
-     */
-    public function loginWithFBCallback() {
-        if ( ! session_id()) session_start();
-        
-        $fb     = $this->facebook();
-        $helper = $fb->getRedirectLoginHelper();
+    public function redirectToGoogleProvider() {
+        return Socialite::driver('google')->redirect();
+    }
 
-        try {
-            $accessToken = $helper->getAccessToken();
-        } catch (Facebook\Exceptions\FacebookResponseException $e) {
-            Log::error('Graph returned an error: ' . $e->getMessage());
-
+    public function handleGoogleProviderCallback(Request $request) {
+        if ($request->get('error')) {
             return redirect(route('front_login'))->withErrors([
-                $this->username() => _t('auth.failed'),
-            ]);;
-        } catch (Facebook\Exceptions\FacebookSDKException $e) {
-            Log::error('Facebook SDK returned an error: ' . $e->getMessage());
-
-            return redirect(route('front_login'))->withErrors([
-                $this->username() => _t('auth.failed'),
+                $this->username() => _t('auth.whoop'),
             ]);
         }
 
-        if ( ! isset($accessToken)) {
-            return redirect(route('front_login'))->withErrors([
-                $this->username() => _t('auth.failed'),
-            ]);
-        }
-        
-        session('fb_access_token', $accessToken->getValue());
-        
-        $fb->setDefaultAccessToken($accessToken->getValue());
-        
-        $response = $fb->get('/me?locale=en_US&fields=email,picture.width(512).height(512),first_name,last_name');
-        $userNode = $response->getGraphUser();
-        $fbEmail  = $userNode->getField('email');
-        
-        if ($fbEmail) {
-            
-            if ( ! $this->allowLogin($fbEmail)) {
-                return redirect(route('front_login'))->withErrors(['email' => _t('auth.email.activated')]);
-            }
-            
-            $this->logUserInFromOutWorld([
-                'email'         => $fbEmail,
-                'avatar'        => $userNode->getField('picture')->getUrl(),
-                'first_name'    => $userNode->getField('first_name'),
-                'last_name'     => $userNode->getField('last_name'),
-                'register_from' => config('frontend.register_from.facebook')
-            ]);
-            
-            return redirect(route('front_settings'));
-        }
-        
-        return redirect(route('front_login'));
-    }
+        $googleUser = Socialite::driver('google')->user();
+        $user       = $googleUser->user;
 
-    /**
-     * Google login callback
-     *
-     * @return $this|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
-     */
-    public function loginWithGoogleCallback() {
-        
-        $client = $this->googleClient();
-        
-        if (isset($_GET['code'])) {
-            $client->authenticate($_GET['code']);
-            $client->setAccessToken($client->getAccessToken());
-           
-            $userAuthenticated = $this->googleUserInfo();
-            
-            if ($userAuthenticated instanceof Google_Service_Oauth2_Userinfoplus && $userAuthenticated->email) {
-                
-                if ( ! $this->allowLogin($userAuthenticated->email)) {
-                    return redirect(route('front_login'))->withErrors(['email' => _t('auth.email.activated')]);
-                }
-                
-                $this->logUserInFromOutWorld([
-                    'email'         => $userAuthenticated->email,
-                    'avatar'        => $userAuthenticated->picture,
-                    'first_name'    => $userAuthenticated->givenName,
-                    'last_name'     => $userAuthenticated->familyName,
-                    'register_from' => config('frontend.register_from.google')
-                ]);
-            
-                return redirect(route('front_settings'));
-            }
-        }
-        
-        return redirect(route('front_login'));
-    }
-    
-    /**
-     * Login/Signup user by email
-     * 
-     * @param type $data
-     * 
-     * @return void
-     */
-    public function logUserInFromOutWorld($data) {
-        
-        $email        = isset($data['email'])         ? $data['email']         : '';
-        $avatar       = isset($data['avatar'])        ? $data['avatar']        : '';
-        $firstName    = isset($data['first_name'])    ? $data['first_name']    : '';
-        $lastName     = isset($data['last_name'])     ? $data['last_name']     : '';
-        $registerFrom = isset($data['register_from']) ? $data['register_from'] : null;
-        $user         = User::where('email', $email)->first();
-        $emailSplit   = explode('@', $email);
-            
-        if (is_null($user)) {
+        $this->socialiteLogin([
+            'email'      => $googleUser->getEmail(),
+            'first_name' => isset($user['first_name']) ? $user['first_name'] : '',
+            'last_name'  => isset($user['last_name'])  ? $user['last_name']  : '',
+            //'avatar'     => $googleUser->avatar_original,
+            'provider'   => config('frontend.socialiteProvider.facebook')
+        ]);
 
-            $emailSplit = explode("@", $email);
-            $username   = $emailSplit[0];
-            while(User::where("username", $emailSplit[0])->first()) {
-                $username = random_string(8, "lud");
-            }
-
-            $roleMember          = Role::where('slug', 'member')->first();
-            $user                = new User();
-            $user->email         = $email;
-            $user->username      = $username;
-            $user->role_id       = ($roleMember) ? $roleMember->id : 2;
-            $user->register_from = $registerFrom;
-            $user->save();
-            
-            $userProfile          = new UserProfile();
-            $userProfile->user_id = $user->id;
-            $userProfile->slug    = $this->_randomSlug($emailSplit[0]);
-            
-            if ($avatar) {
-                $avatar                    = $this->saveOutWorldAvatar($avatar);
-                $userProfile->avatar_image = serialize($avatar);
-            }
-            
-            if ($firstName) {$userProfile->first_name = $firstName;}
-            if ($lastName) {$userProfile->last_name = $lastName;}
-            
-            $userProfile->save();
-        }
-        
-        auth()->loginUsingId($user->id);
-    }
-
-    /**
-     * Save avatar from social
-     *
-     * @param $avatarUrl
-     * @return array
-     */
-    public function saveOutWorldAvatar($avatarUrl) {
-        try {
-            $storagePath = config('frontend.avatarsFolder');
-            $sizes       = config('frontend.avatarSizes');
-            $fileInfo    = pathinfo($avatarUrl, PATHINFO_EXTENSION);
-            $extension   = explode('?', $fileInfo);
-            $names       = [];
-            unset($sizes['original']);
-            
-            foreach ($sizes as $size) {
-                $name = generate_filename($storagePath, $extension[0], [
-                    'prefix' => 'avatar_', 
-                    'suffix' => "_{$size['w']}x{$size['h']}"
-                ]);
-                
-                file_put_contents($storagePath . '/' . $name, file_get_contents($avatarUrl));
-
-                $names[$size['w']] = $name;
-            }
-            
-            return $names;
-        } catch (Exception $ex) {
-            Log::error($ex->getMessage());
-        }
+        return redirect(route('front_settings'));
     }
 
     /**
@@ -252,29 +113,121 @@ class LoginController extends Controller {
         return $loginType;
     }
 
+    protected function socialiteLogin($data) {
+
+        $email         = isset($data['email'])      ? $data['email']      : '';
+        //$avatar        = isset($data['avatar'])     ? $data['avatar']     : '';
+        $firstName     = isset($data['first_name']) ? $data['first_name'] : '';
+        $lastName      = isset($data['last_name'])  ? $data['last_name']  : '';
+        $loginProvider = isset($data['provider'])   ? $data['provider']   : null;
+        $emailSplit    = explode('@', $email);
+
+        $user         = User::where('email', $email)->first();
+        if (is_null($user)) {
+
+            $slug                 = $this->_randomSlug($emailSplit[0]);
+            $roleMember           = Role::where('slug', 'member')->first();
+
+            $user                 = new User();
+            $user->email          = $email;
+            $user->username       = $slug;
+            $user->role_id        = ($roleMember) ? $roleMember->id : 2;
+            $user->login_provider = $loginProvider;
+            $user->save();
+
+            $userProfile          = new UserProfile();
+            $userProfile->user_id = $user->id;
+            $userProfile->slug    = $slug;
+
+            //Temporary removing save avatar because it takes so long
+//            if ($avatar) {
+//                $avatar                    = $this->socialiteSaveAvatar($avatar);
+//                $userProfile->avatar_image = serialize($avatar);
+//            }
+
+            if ($firstName) {$userProfile->first_name = $firstName;}
+            if ($lastName) {$userProfile->last_name = $lastName;}
+
+            $userProfile->save();
+        }
+
+        auth()->loginUsingId($user->id);
+    }
+
+    /**
+     * Save avatar from social
+     *
+     * @param $avatarUrl
+     * @return array
+     * @throws \Exception
+     */
+    protected function socialiteSaveAvatar($avatarUrl) {
+        try {
+            $storagePath             = config('frontend.avatarsFolder');
+            $tmpPath                 = config('frontend.tmpFolder');
+            $sizes                   = config('frontend.avatarSizes');
+            $clientOriginalExtension = 'jpg';
+            $names                   = [];
+
+            unset($sizes['original']);
+            $tmp_original = generate_filename($tmpPath, $clientOriginalExtension, ['prefix' => 'avatar_original']);
+            file_put_contents($tmpPath . '/' . $tmp_original, file_get_contents($avatarUrl));
+
+            foreach ($sizes as $size) {
+                $name = generate_filename($storagePath, $clientOriginalExtension, [
+                    'prefix' => 'avatar_',
+                    'suffix' => "_{$size['w']}x{$size['h']}"
+                ]);
+
+                $image = ImageIntervention::make($tmpPath . '/' . $tmp_original)->orientate();
+                $image->fit($size['w'], $size['h'], function ($constraint) {
+                    $constraint->upsize();
+                });
+
+                $image->save($storagePath . '/' . $name);
+                $names[$size['w']] = $name;
+            }
+
+            delete_file($tmpPath . "/" . $tmp_original);
+            return $names;
+        } catch (Exception $ex) {
+            Log::error($ex->getMessage());
+        }
+    }
+
     /**
      * Random slug
-     * 
+     *
      * @param $prefix string
-     * 
+     *
      * @return string
      */
     protected function _randomSlug($prefix) {
-        
-        $userProfile = UserProfile::where('slug', $prefix)->first();
+        $userProfile = User::where('username', $prefix)->first();
+        if ($userProfile === null) {
+            $routes     = Route::getRoutes();
+            $checkRoute = false;
+            foreach ($routes as $route) {
+                $routeSplit = explode('/', $route->uri);
+                if (isset($routeSplit[0]) && $prefix == $routeSplit[0]) {
+                    $checkRoute = true;
+                    break;
+                }
+            }
+
+            if ( ! $checkRoute) {
+                return $prefix;
+            }
+        }
+
+        $slug        = $prefix . "_" . random_string(6, $available_sets = 'lud');
+        $userProfile = User::where('username', $slug)->first();
         
         if ($userProfile === null) {
-            return $prefix;
+            return $slug;
         }
-        
-        $slug        = $prefix . random_string(6, $available_sets = 'lud');
-        $userProfile = UserProfile::where('slug', $slug)->first();
-        
-        if ($userProfile) {
-            $this->_randomSlug($prefix);
-        }
-        
-        return $slug;
+
+        return $this->_randomSlug($slug);
     }
 
     /**

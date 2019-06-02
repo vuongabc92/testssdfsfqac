@@ -23,7 +23,7 @@
     cursor: pointer;
 }
 .theme-tree>li .screenshot {
-    width: 200px;
+    max-width: 200px;
     height: 250px;
     float: left;
 }
@@ -287,6 +287,10 @@
     }
     .theme-tree>li>a>div.theme-leaf {
         padding: 5px;
+    }
+    .theme-tree>li .screenshot {
+        width: 100%;
+        height: 215px;
     }
     form.search-theme-frm>input {
         width: 80%;

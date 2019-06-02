@@ -37,35 +37,19 @@ trait SaveSettings {
         
         return true;
     }
-    
+
     /**
-     * Save settings slug.
-     * 
+     * Save slug
+     *
      * @param Request $request
-     * 
-     * @return boolean|JSON
+     * @return \Illuminate\Contracts\Validation\Factory|\Illuminate\Contracts\Validation\Validator
+     * @throws \Exception
      */
     public function saveSlug(Request $request) {
         
         $userProfile = user()->userProfile;
         $slug        = $request->get('slug');
         $validator   = validator($request->all(), $this->_saveSlugValidateRules(), $this->_saveSlugValidateMessages());
-        
-//        $validator->after(function($validator) use($slug) {
-//            if (getSlugRemainDay()) {
-//                $remainDay     = getSlugRemainDay();
-//                $slugUpdatedAt = new \DateTime(user()->userProfile->slug_updated_at);
-//                $slugUpdatedAt->modify("+{$remainDay} days");
-//                
-//                $validator->errors()->add('slug', _t('setting.profile.slug_time', ['date' => $slugUpdatedAt->format('d/m/Y')]));
-//            }
-//            
-//            $privateUrls = config('frontend.unavailableCVUrls') + $this->_getPrivateUrls();
-//            
-//            if (in_array($slug, $privateUrls)) {
-//                $validator->errors()->add('slug', _t('setting.profile.slug_exi'));
-//            }
-//        });
         
         if ($validator->fails()) {
             return $validator;
@@ -76,6 +60,25 @@ trait SaveSettings {
         $userProfile->save();
         
         return $userProfile;
+    }
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Contracts\Auth\Authenticatable|\Illuminate\Contracts\Validation\Factory|\Illuminate\Contracts\Validation\Validator|null
+     */
+    public function saveUsername(Request $request) {
+        $validator = validator($request->all(), $this->_saveUsernameRules(), $this->_saveUsernameMessages());
+        if ($validator->fails()) {
+            return $validator;
+        }
+
+        if ( ! user()->updated_auth_info) {
+            user()->username          = $request->get('username');
+            user()->updated_auth_info = 1;
+            user()->save();
+        }
+
+        return user();
     }
     
     /**
@@ -862,5 +865,31 @@ trait SaveSettings {
             'id.exists'      => _t('setting.skill.exi'),
             'votes.between'  => _t('setting.skill.bet')
         ]; 
+    }
+
+    /**
+     * Get register validation rules
+     *
+     * @return array
+     */
+    protected function _saveUsernameRules() {
+        return [
+            'username' => 'required|min:2:|max:64|alpha_dash|unique:users,username|check_route'
+        ];
+    }
+
+    /**
+     * Get register validation messages
+     *
+     * @return array
+     */
+    protected function _saveUsernameMessages() {
+        return [
+            'username.required'   => _t('register.uname.req'),
+            'username.min'        => _t('register.uname.min'),
+            'username.max'        => _t('register.uname.max'),
+            'username.alpha_dash' => _t('register.uname.aldash'),
+            'username.unique'     => _t('register.uname.uni')
+        ];
     }
 }

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>:)</title>
+        <title>Octocv @yield('title')</title>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <link rel="apple-touch-icon" sizes="57x57" href="{{ asset('assets/frontend/images//apple-icon-57x57.png') }}">
@@ -32,9 +32,7 @@
         <link rel="stylesheet" href="{{ asset('assets/frontend/css/master.css') }}">
         <link rel="stylesheet" href="{{ asset('assets/frontend/css/layout.css') }}">
         @yield('link_style')
-        <style>
-            @yield('inline_style')
-        </style>
+        @yield('inline_style')
     </head>
     <body>
         <header class="_fwfl header">
@@ -45,20 +43,21 @@
                         <a href="{{ route('front_register') }}" class="_fr btn _btn _btn-green header-register-btn">{{ _t('register') }}</a>
                     @endif
                     <ul class="_fr _lsn _p0 _m0 navlist">
-                        <li class="headnav-contact"><a href="{{ route('front_contact') }}"><span>{{ _t('contact') }}</span></a></li>
-                        <li class="headnav-dev"><a href="{{ route('front_developer') }}"><span>{{ _t('need_help') }}</span></a></li>
+                        <li><a href="{{ route('front_hireus') }}"><span>{{ _t('hire_us') }}</span></a></li>
 
                         @if ( ! auth()->check())
                             <li><a href="{{ route('front_login') }}"><span>{{ _t('login') }}</span></a></li>
+                            {{--<li><a href="{{ route('front_register') }}"><span>{{ _t('register') }}</span></a></li>--}}
                         @else
                             <li><a href="{{ route('front_logout') }}"><span>{{ _t('logout') }}</span></a></li>
                             <li><a href="{{ route('front_settings') }}"><img src="/{{ user()->userProfile->avatar() }}" class="_fl avatar" /></a></li>
                         @endif
                     </ul>
+                    <button class="btn _btn _fr"><i class="fa fa-bars"></i></button>
                 </nav>
             </div>
         </header>
-        @if (auth()->check() && ! user()->email_verified_at && ! in_array(user()->register_from, config('frontend.register_from')))
+        @if (auth()->check() && ! user()->email_verified_at && ! in_array(user()->login_provider, config('frontend.socialiteProvider')))
             <div class="_fwfl verify-email-bar">
                 <span>{{ _t('setting.email.verify_msg') . user()->email }}. <a href="{{ route('verification.resend') }}">{{ _t('setting.email.verify_resend') }}</a> </span>
             </div>

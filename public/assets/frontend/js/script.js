@@ -1063,6 +1063,14 @@ var HELPERS = {
                             currentSlug.html(cvUrl);
                             $('a.current-slug').attr('href', cvUrl);
                         }
+
+                        if (formType === '_USERNAME') {
+                            var username    = response.data.username,
+                                currentSlug = $('#currentUsername');
+
+                            currentSlug.html(username);
+                            $('#settingUsername').hide()
+                        }
                         
                         if (formType === '_EXPERTISE') {
                             $('.expertise-intro').html(response.data.expertise);

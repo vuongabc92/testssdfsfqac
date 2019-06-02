@@ -25,8 +25,8 @@ Route::group(['middleware' => ['auth:web']], function ($route) {
 Route::get('login', 'Auth\LoginController@showLoginForm')->name('front_login');
 Route::post('login', 'Auth\LoginController@login')->name('front_login_post');
 Route::get('logout', 'Auth\LoginController@logout')->name('front_logout');
-Route::get('facebook-authenticate', 'Auth\LoginController@loginWithFBCallback')->name('front_login_with_fbcallback');
-Route::get('google-authenticate', 'Auth\LoginController@loginWithGoogleCallback')->name('front_login_with_gcallback');
+Route::get('facebook-authenticate', 'Auth\LoginController@loginWithFBCallback')->name('front_login_facebook_callback');
+Route::get('google-authenticate', 'Auth\LoginController@loginWithGoogleCallback')->name('front_login_google_callback');
 
 // Registration Routes.
 Route::get('register', 'Auth\RegisterController@showRegistrationForm')->name('front_register');
@@ -39,10 +39,10 @@ Route::get('password/reset/{token}/{email}', 'Auth\ResetPasswordController@showR
 Route::post('password/reset', 'Auth\ResetPasswordController@reset')->name('front_resetpass_post');
 
 Route::get('/', 'IndexController@index')->name('front_index');
-Route::get('/contact', 'IndexController@contact')->name('front_contact');
-Route::get('/developer', 'IndexController@developer')->name('front_developer');
-Route::get('/privacy-policy', 'IndexController@privacyPolicy')->name('front_privacy_policy');
-Route::get('/terms-and-conditions', 'IndexController@termsAndConditions')->name('front_terms_conditions');
+//Route::get('/contact', 'IndexController@contact')->name('front_contact');
+Route::get('/hire-us', 'IndexController@hireus')->name('front_hireus');
+Route::get('/privacy', 'IndexController@privacyPolicy')->name('front_privacy_policy');
+Route::get('/terms', 'IndexController@termsAndConditions')->name('front_terms_conditions');
 
 Route::get('more-themes', 'SettingsController@lazyLoadTheme')->name('front_themes_lazy');
 Route::get('theme/{slug}/details', 'SettingsController@themeDetails')->name('front_theme_details');
@@ -52,3 +52,8 @@ Route::get('i/{slug?}', 'ResumeController@index')->name('front_cv');
 Route::get('email/verify', 'Auth\VerificationController@show')->name('verification.notice');
 Route::get('email/verify/{id}', 'Auth\VerificationController@verify')->name('verification.verify');
 Route::get('email/resend', 'Auth\VerificationController@resend')->name('verification.resend');
+
+Route::get('login/facebook', 'Auth\LoginController@redirectToFacebookProvider')->name('login_facebook');
+Route::get('login/facebook/callback', 'Auth\LoginController@handleFacebookProviderCallback')->name('login_facebook_callback');
+Route::get('login/google', 'Auth\LoginController@redirectToGoogleProvider')->name('login_google');
+Route::get('login/google/callback', 'Auth\LoginController@handleGoogleProviderCallback')->name('login_google_callback');

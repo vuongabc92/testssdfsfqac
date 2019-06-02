@@ -10,6 +10,13 @@ use App\Jobs\SendPasswordResetEmailJob;
 use App\Notifications\VerifyEmail as VerifyEmailNotification;
 use App\Jobs\SendVerifyEmailJob;
 
+/**
+ * @property string email
+ * @property string username
+ * @property int role_id
+ * @property string login_provider
+ * @property mixed id
+ */
 class User extends Authenticatable implements  MustVerifyEmail {
     
     use Notifiable;
@@ -31,7 +38,7 @@ class User extends Authenticatable implements  MustVerifyEmail {
     protected $hidden = [
         'password', 'remember_token',
     ];
-    
+
     /**
      * Get the user profile record associated with the user.
      */
